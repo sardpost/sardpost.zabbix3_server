@@ -4,7 +4,7 @@ python: "2.7"
 before_install:
  - sudo apt-get update -qq
 install:
-  - pip install ansible
-  - ansible-galaxy install geerlingguy.apache
+  - sudo pip install ansible
+  - sudo ansible-galaxy install geerlingguy.apache
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
