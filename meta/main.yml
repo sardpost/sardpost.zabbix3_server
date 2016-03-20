@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: Davide Puggioni, Werner Dijkerman
-  description: Installing Zabbix Server 3 on RHEL/Centos 7
+  description: Zabbix Server 3 installation on RHEL/Centos 7
   company: myCompany.Dotcom
   license: license (GPLv3)
   min_ansible_version: 1.2
