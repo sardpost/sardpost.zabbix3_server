@@ -6,5 +6,6 @@ before_install:
 install:
   - sudo pip install ansible
   - sudo ansible-galaxy install geerlingguy.apache
+script:
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
