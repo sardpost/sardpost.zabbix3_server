@@ -2,9 +2,9 @@
 language: python
 python: "2.7"
 before_install:
- - yum upgrade -y
+ - sudo apt-get update -qq
 install:
-  - yum install ansible
+  - pip install ansible
   - ansible-galaxy install geerlingguy.apache
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
