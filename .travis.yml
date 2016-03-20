@@ -2,7 +2,7 @@
 language: python
 python: "2.7"
 before_install:
- - sudo yum update -y
+ - yum upgrade -y
 install:
   - yum install ansible
   - ansible-galaxy install geerlingguy.apache
