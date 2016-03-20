@@ -1,0 +1,10 @@
+---
+# handlers file for wdijkerman.zabbix
+
+- name: zabbix-server restarted
+  service: name=zabbix-server state=restarted enabled=yes
+  tags: zabbix-server
+
+- name: mysql-server restarted
+  service: name=mariadb state=restarted enabled=yes
+  tags: mysql-server

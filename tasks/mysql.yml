@@ -1,0 +1,63 @@
+---
+# task file for mysql
+- name: MySQL | Ensure mariadb packages are installed
+  yum: name={{ item }} state="present"
+  with_items:
+    - mariadb
+    - mariadb-server
+
+- name: MySQL | Ensure mariadb is running and configured to start at boot
+  service: name=mariadb state=started enabled=yes
+
+# idempotently ensure secure mariadb installation --
+# - attempts to connect as root user with no password and then set the root@ mysql password for each mysql root user mode.
+# - ignore_errors is true because this task will always fail on subsequent runs (as the root user password has been changed from "")
+- name: MySQL | Change root user password on first run, this will only succeed (and only needs to succeed) on first playbook run
+  mysql_user: login_user=root
+              login_password=''
+              name=root
+              password={{ mysql_root_password }}
+              priv=*.*:ALL,GRANT
+              host={{ item }}
+  when: first_playbook_run
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+  ignore_errors: true
+
+- name: MySQL | Ensure the anonymous mysql user ""@{{ansible_hostname}} is deleted
+  mysql_user: user="" host="{{ ansible_hostname }}" state="absent" login_user=root login_password={{ mysql_root_password }}
+
+- name: MySQL | Ensure the anonymous mysql user ""@localhost is deleted
+  mysql_user: user="" state="absent" login_user=root login_password={{ mysql_root_password }}
+
+- name: MySQL | Ensure the mysql test database is deleted
+  mysql_db: db=test state=absent login_user=root login_password={{ mysql_root_password }}
+
+- name: "MySQL | Create database"
+  mysql_db: "name={{ server_dbname }} state=present login_user=root login_password={{ mysql_root_password }}"
+  when: zabbix_database_creation
+  tags:
+    - zabbix-server
+    - database
+
+- name: "MySQL | Create database user"
+  mysql_user: "name={{ server_dbuser }}
+              password={{ server_dbpassword }}
+              priv={{ server_dbname }}.*:ALL
+              state=present
+              login_user=root
+              login_password={{ mysql_root_password }}"
+  when: zabbix_database_creation
+  tags:
+    - zabbix-server
+    - database
+
+- name: "MySQL | Importing initial schema and data"
+  mysql_db: name={{ server_dbname }} state=import target={{ datafiles_path_mysql }}/create.sql.gz login_user=root login_password={{ mysql_root_password }}
+  when: zabbix_database_sqlload
+  tags:
+    - zabbix-server
+    - database

@@ -1,0 +1,114 @@
+---
+# Tasks specific for RedHat systems
+
+- name: "RedHat | Set some facts"
+  set_fact:
+    apache_log: httpd
+    datafiles_path: "/usr/share/doc/zabbix-server-{{ database_type }}-{{ zabbix_version }}*/create"
+  tags:
+    - zabbix-server
+    - init
+    - config
+    - database
+
+- name: "RedHat | Install basic repo file"
+  template: "src=rhel.repo.j2
+            dest=/etc/yum.repos.d/zabbix.repo
+            owner=root
+            group=root
+            mode=0644"
+  when: zabbix_repo
+  tags:
+    - zabbix-server
+    - init
+    - config
+
+- name: "RedHat | Restore SElinux context of /etc/yum.repos.d/zabbix.repo"
+  command: "/sbin/restorecon -F /etc/yum.repos.d/zabbix.repo"
+
+- name: "RedHat | Installing zabbix-server"
+  yum:  "pkg=zabbix-server-{{ database_type }}
+        state=present"
+  tags:
+    - zabbix-server
+    - init
+    - config
+
+- name: "RedHat | Installing zabbix-agent"
+  yum:  pkg=zabbix-agent state=present
+  tags:
+    - zabbix-agent
+    - init
+    - config
+
+- name: "RedHat | Install zabbix-web"
+  yum:  "pkg=zabbix-web-{{ database_type }}
+        state=present"
+  when: zabbix_web
+  tags:
+    - zabbix-server
+    - init
+    - config
+
+- name: "RedHat | Install SElinux Boolean module dependencies"
+  yum: name=libsemanage-python state=present
+  tags:
+    - zabbix-server
+    - init
+    - config
+
+- name: RedHat | Setting SElinux boolean httpd_can_connect_zabbix to 1
+  seboolean: name=httpd_can_connect_zabbix state=yes persistent=yes
+
+- name: RedHat | Setting SElinux boolean zabbix_can_network to 1
+  seboolean: name=zabbix_can_network state=yes persistent=yes
+
+- name: RedHat | Firewalld | Opening port 80 http
+  firewalld: service=http permanent=true state=enabled
+
+- name: RedHat | Firewalld | Opening port 443 https
+  firewalld: service=https permanent=true state=enabled
+
+- name: RedHat | Firewalld | Opening port 10050-10051 tcp
+  firewalld: port=10050-10051/tcp permanent=true state=enabled
+
+- name: "RedHat | Install apache vhost"
+  template: "src=apache_vhost.conf.j2
+            dest=/etc/httpd/conf.d/zabbix.conf
+            owner=root
+            group=root
+            mode=0644"
+  when: zabbix_vhost and zabbix_web
+  notify: restart apache
+  tags:
+    - zabbix-server
+    - init
+    - config
+
+- name: "RedHat | Restore SElinux context of /etc/httpd/conf.d/zabbix.conf"
+  command: "/sbin/restorecon -F /etc/httpd/conf.d/zabbix.conf"
+
+- name: "RedHat | Install Ansible module dependencies"
+  yum: name=python-psycopg2 state=present
+  when: zabbix_database_creation
+  tags:
+    - zabbix-server
+    - init
+
+- name: "RedHat | Install Mysql Client package"
+  yum: "name={{ item }} state=present"
+  with_items:
+    - mariadb
+    - MySQL-python
+  when: database_type == 'mysql' and ansible_distribution_major_version == "7"
+  tags:
+    - zabbix-server
+    - init
+
+- name: "RedHat | Install PostgreSQL client package"
+  yum: name=postgresql state=latest
+  when: database_type == 'pgsql'
+  tags:
+    - zabbix-server
+    - init
+    - database

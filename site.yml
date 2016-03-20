@@ -1,0 +1,16 @@
+---
+# This playbook deploys the whole application stack in this site.  
+
+- name: Install Apache HTTPD
+  hosts: zabbix
+  remote_user: root
+
+  roles:
+    - geerlingguy.apache
+
+- name: Install Zabbix 3
+  hosts: zabbix
+  remote_user: root
+
+  roles:
+    - sardpost-zabbix-server3
