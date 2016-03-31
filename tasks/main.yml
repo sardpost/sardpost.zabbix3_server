@@ -1,5 +1,4 @@
 ---
-# tasks file for wdijkerman.zabbix
 
 - name: "Append Zabbix Server url entry to /etc/hosts file"
   lineinfile:   dest=/etc/hosts
@@ -76,3 +75,6 @@
 
 - name: "Ensure Zabbix Server is started and configured to start at boot"
   service: name=zabbix-server state=started enabled=yes
+
+- name: "Ensure Zabbix agent is started and configured to start at boot"
+  service: name=zabbix-agent state=started enabled=yes
